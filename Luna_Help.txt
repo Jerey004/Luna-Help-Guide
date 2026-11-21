@@ -1,0 +1,282 @@
+LUNA | Pi 500 cyberdeck operator's guide
+Voice, text, documents, projects and local models
+
+QUICK START
+
+  At the Pi shell ($)       voice
+  At Enter to Talk          Type a question and press Enter.
+  To speak                  Press Enter on a blank line, wait for
+                            "Speak now", speak, then press Enter again.
+  At You said               Correct the text if needed, then press Enter.
+  To continue               Ask your next question at Enter to Talk.
+  To finish                 Type q at Enter to Talk.
+
+Read this guide on the Pi with:
+  less ~/cyberdeck/refs/Luna_Help.txt
+
+In less, press Space for the next screen, b to go back, or / followed
+by a word and Enter to search. Press n for the next match and q to exit.
+
+Find a section by its number:
+  01  Which prompt accepts my command?
+  02  Conversation, notes and memory
+  03  Add a document and ask a question
+  04  Install or check the ask docs command
+  05  Create, edit and run projects
+  06  Launch Numeris and check deck status
+  07  Personality, models and response time
+  08  Troubleshooting and file locations
+
+01 | WHICH PROMPT ACCEPTS MY COMMAND?
+
+Shell ($)       Run Linux commands and shortcuts such as voice, luna,
+                numeris, python3, nano and ollama list. Type only the
+                command itself. The $ on the screen belongs to the prompt.
+
+Enter to Talk   This is Luna. Type a sentence, type a Luna command, or
+                press Enter to record. Command examples below use lowercase.
+                A new turn starts automatically after each reply.
+
+Send to Aider?  Check the displayed filename and task. Lowercase y sends
+[y/N]           the edit request. Pressing Enter declines it.
+
+Aider (>)       Ask for a code edit or enter /help, /run or /exit.
+                At a yes/no question, answer that question first.
+                Example: after /run, y adds the program output to the chat.
+
+Running app     Answer the app's own prompts. When it exits, control
+                returns to whichever interface launched it.
+
+A frequent mix-up: voice at the shell opens Luna's voice/text chat.
+The shell alias luna opens the interactive Aider coding session.
+Typing /run python3 status.py at Enter to Talk sends text to Luna.
+Typing it at Aider's > prompt runs the command.
+
+02 | CONVERSATION, NOTES AND MEMORY
+
+Normal chat
+  Ask "Give me two ideas for a rainy-day photo." Then ask "How would
+  I shoot the second one?" Luna sends the current chat history with
+  the follow-up. Starting voice again begins a fresh conversation.
+
+Persistent memory
+  remember my preferred camera is the X-T5
+  memories
+
+  The first command shows the fact and asks for confirmation. Enter y
+  to save it. The second lists saved facts with line numbers. Luna loads
+  these facts for future voice sessions. To correct a saved fact, quit
+  to the shell, edit ~/cyberdeck/memory.txt with nano, then restart voice.
+
+Field notes
+  note heron returned to the creek before sunset
+  recall heron
+
+  Use note for a dated observation. Confirm the wording with y when
+  prompted. Use recall with a distinctive word to find it later.
+  Field notes live in ~/cyberdeck/field-notes.txt.
+
+Reusable references
+  save reference The blue camera bag contains the spare battery.
+  lookup blue camera bag
+
+  Save reference appends a line to ~/cyberdeck/refs/saved.txt.
+  Lookup searches the reference folder for a literal phrase, ignoring
+  capitalization, and prints matching lines. This is useful when you
+  want the original wording immediately.
+
+03 | ADD A DOCUMENT AND ASK A QUESTION
+
+The document helper reads UTF-8 text (.txt) and Markdown (.md) under
+~/cyberdeck/refs/, including subfolders. Each question starts a fresh
+search. A newly copied file is available on the next question.
+
+Example: suppose trail-kit.md is already in your Pi's home directory.
+At the shell, type these commands one at a time:
+  mkdir -p ~/cyberdeck/refs
+  cp ~/trail-kit.md ~/cyberdeck/refs/
+  ls ~/cyberdeck/refs
+  voice
+
+At Enter to Talk:
+  ask docs which spare battery does the trail kit use?
+
+Use lookup when you remember an exact phrase. Use ask docs when you
+want an explanation based on your manuals. Include a distinctive term,
+such as a model number or trail name. Each ask docs request stands on
+its own, so repeat that term in follow-ups.
+
+How retrieval works: the helper ranks short passages by matching words
+in the question against the document text and filename. It gives more
+weight to rarer matches and sends up to three passages to local Ollama.
+Very broad questions may retrieve only part of a long manual.
+
+How to check an answer: [1] refers to the first entry under "Passages
+supplied". Each entry gives a filename and the passage's starting line.
+For example, if it says trail-kit.md (line 27), open the original at
+the shell with:
+  less +27 ~/cyberdeck/refs/trail-kit.md
+
+The passage list records what Luna received. Read the passage when
+the exact wording matters. If the answer seems unrelated, try lookup
+with a phrase from the original or ask a narrower document question.
+
+PDFs and Word documents: export or convert the contents to .txt or .md
+before copying them into refs. Scanned pages need text recognition
+(OCR) first. Changing the filename extension alone does not convert it.
+
+Offline use: the helper reads local files and contacts Ollama at
+127.0.0.1. With the model installed and Ollama running, a hotspot is
+unnecessary. A web-search command was discussed as a future addition.
+
+04 | INSTALL OR CHECK THE ASK DOCS COMMAND
+
+Transfer ask_docs.py to ~/cyberdeck/ask_docs.py. It uses the Python
+standard library. The refs folder holds your manuals, while the helper
+script sits one directory above it.
+
+At the shell, open ~/.bashrc with nano. Inside voice(), find:
+  case "$q" in
+
+If the ask docs branch is missing, insert these lines directly below it:
+  "ask docs "*)
+      python3 ~/cyberdeck/ask_docs.py "${q#ask docs }"
+      continue ;;
+
+In nano, save with Ctrl+O, Enter, then exit with Ctrl+X.
+At the shell, check the syntax, reload and start Luna:
+  bash -n ~/.bashrc && source ~/.bashrc && voice
+
+Live test at Enter to Talk, one line at a time:
+  save reference The amber pouch holds the lens cloth.
+  ask docs what does the amber pouch hold?
+
+Look for "lens cloth" and an entry for saved.txt. If Luna treats the
+command as ordinary chat, test the helper directly at the shell:
+  python3 ~/cyberdeck/ask_docs.py "What does the amber pouch hold?"
+
+If the shell test works, check the case branch, reload ~/.bashrc and
+start a fresh voice session. If the helper reports no matching passages,
+check the files under refs and the spelling of your search terms.
+
+05 | CREATE, EDIT AND RUN PROJECTS
+
+At Enter to Talk:
+  project trailbook
+  code make main.py print Trailbook ready
+  run project
+
+Enter one line at a time. The first selects or creates trailbook.
+Use lowercase letters, numbers, hyphens or underscores in the name.
+The second previews the edit. Check that the target ends in
+projects/trailbook/main.py, then confirm with y. Wait for Enter to Talk
+to return before entering run project. The expected output for this
+test is "Trailbook ready".
+
+Reopen a project in a later session with project trailbook. To see
+existing names, run ls ~/cyberdeck/projects at the shell. The voice
+command list projects was proposed; use the shell listing unless you
+have added that command yourself.
+
+Where edits land matters. Your setup uses a Git repository per project.
+After selecting trailbook, verify the repository root at the shell:
+  git -C ~/cyberdeck/projects/trailbook rev-parse --show-toplevel
+
+The path should end in /projects/trailbook. If it ends in /cyberdeck,
+check the project creation block in ~/.bashrc. After directory creation
+and before project_dir="$dir", the intended line is:
+  git -C "$dir" init -q || continue
+
+To review an edit inside the project:
+  cd ~/cyberdeck/projects/trailbook
+  git status --short
+  git log -1 --oneline
+  git show --stat HEAD
+
+Aider's commit confirms that it wrote files. Running the project and
+observing the expected behavior checks whether those files do the job.
+With no project selected, the code command in your original setup
+targets status.py. Decline if the preview shows an unexpected file.
+
+06 | LAUNCH NUMERIS AND CHECK DECK STATUS
+
+Shell shortcut:
+  numeris
+
+This launches ~/cyberdeck/numeris/numeris_v05.py from its own folder.
+To run it directly in case the alias is missing:
+  (cd ~/cyberdeck/numeris && python3 numeris_v05.py)
+
+If you added the optional Numeris branch to voice(), type or say
+"run numeris" at Enter to Talk. The shell shortcut works independently
+of that branch. The short Luna help menu similarly requires the optional
+help/commands branch; you can always read this file with less.
+
+For the cyberdeck status script, use this at the shell:
+  python3 ~/cyberdeck/status.py
+
+07 | PERSONALITY, MODELS AND RESPONSE TIME
+
+Regular voice/text chat: Luna's system prompt starts with "You are
+Luna" in the voice function in ~/.bashrc. Edit the personality sentence
+and keep the saved-facts expression intact. The jq program is enclosed
+in single quotes. Use wording such as "a cyberdeck companion for Josh"
+to avoid inserting an apostrophe that prematurely closes the Bash quote.
+
+Document questions: ask_docs.py supplies its own instructions to answer
+briefly from excerpts and cite their numbers. It defaults to
+qwen2.5-coder:3b. To select another installed model for document Q&A
+for this shell session, run ollama list, then use its exact tag:
+  export LUNA_DOCS_MODEL='YOUR_INSTALLED_TAG'
+  voice
+
+Replace YOUR_INSTALLED_TAG with the tag shown on your Pi. To return
+document Q&A to its default, run unset LUNA_DOCS_MODEL at the shell.
+The regular chat and Aider model settings are configured separately.
+
+Response speed: the documented setup gathers the complete reply before
+displaying it. Document Q&A also waits for a complete answer. Spoken
+questions add transcription time. Streaming replies and an animated
+face were discussed as upgrades. The existing text prompts indicate
+when to speak, review, confirm or wait.
+
+08 | TROUBLESHOOTING AND FILE LOCATIONS
+
+Microphone trouble: type a question first. If typed chat works, check
+capture hardware at the shell with arecord -l (lowercase L). The setup
+used plughw:CARD=Device,DEV=0. Compare that with your USB device.
+
+Model error: at the shell run ollama list. Verify the model tag. To
+check whether the local service answers, run:
+  curl -sS http://127.0.0.1:11434/api/tags
+
+Aider uses ollama_chat/qwen2.5-coder:3b. The local Ollama API uses
+qwen2.5-coder:3b. Watch the double l in ollama and the r in coder.
+
+Silent project: in the selected project directory, run wc -c main.py.
+Zero bytes means Python ran an empty file. Check the Git root in
+section 05 before requesting another edit.
+
+Lookup misses a just-saved reference: check the most recent lines:
+  tail -n 3 ~/cyberdeck/refs/saved.txt
+
+To inspect the commands your shell actually loaded:
+  declare -f voice | less
+  alias luna
+  alias numeris
+
+File map, relative to your home directory:
+  ~/.bashrc                         Shell shortcuts and Luna command routing
+  ~/cyberdeck/memory.txt            Persistent personal facts for chat
+  ~/cyberdeck/MEMORY.md             Read-only context in the Aider alias shown
+  ~/cyberdeck/field-notes.txt       Timestamped observations
+  ~/cyberdeck/refs/saved.txt        Entries from save reference
+  ~/cyberdeck/refs/Luna_Help.txt    This searchable help file
+  ~/cyberdeck/ask_docs.py           Local document question helper
+  ~/cyberdeck/projects/             Named project folders
+  ~/cyberdeck/status.py             Deck status utility
+  ~/cyberdeck/numeris/              Numeris application
+
+Tool map: Bash routes commands. arecord captures audio. Vosk turns it
+into text. jq and curl build and send chat requests. Ollama runs the
+model. Aider edits code, Git records changes, and Python runs projects.
